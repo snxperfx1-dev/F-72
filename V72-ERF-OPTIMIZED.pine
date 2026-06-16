@@ -621,23 +621,6 @@ f_wrEvict() =>
     array.shift(wr_deathPhase)
     array.shift(wr_depth)
 
-// Helper: FRZ removal (removes entry at index from all FRZ arrays)
-f_frzRemove(int idx) =>
-    array.remove(frz_topArr, idx)
-    array.remove(frz_botArr, idx)
-    array.remove(frz_barArr, idx)
-    array.remove(frz_dirArr, idx)
-    array.remove(frz_scoreArr, idx)
-    array.remove(frz_classArr, idx)
-    array.remove(frz_tierArr, idx)
-    array.remove(frz_tierFArr, idx)
-    array.remove(frz_compArr, idx)
-    array.remove(frz_ownerArr, idx)
-    array.remove(frz_statusArr, idx)
-    array.remove(frz_idxArr, idx)
-    array.remove(frz_boxArr, idx)
-    array.remove(frz_lblArr, idx)
-
 // Helper: Dominant narrative (compressed ternary chain)
 f_getNarrative(int dir, float htfAl, string phase, float rotProb, string rotSt, string resSt) =>
     string result = "No Clear Narrative"
@@ -5636,6 +5619,23 @@ var array<box>    frz_boxArr    = array.new<box>  ()
 var array<label>  frz_lblArr    = array.new<label>()
 
 var int frz_totalSpawned = 0   // running counter for FRZ #N label
+
+// Helper: FRZ removal (removes entry at index from all FRZ arrays)
+f_frzRemove(int idx) =>
+    array.remove(frz_topArr, idx)
+    array.remove(frz_botArr, idx)
+    array.remove(frz_barArr, idx)
+    array.remove(frz_dirArr, idx)
+    array.remove(frz_scoreArr, idx)
+    array.remove(frz_classArr, idx)
+    array.remove(frz_tierArr, idx)
+    array.remove(frz_tierFArr, idx)
+    array.remove(frz_compArr, idx)
+    array.remove(frz_ownerArr, idx)
+    array.remove(frz_statusArr, idx)
+    array.remove(frz_idxArr, idx)
+    array.remove(frz_boxArr, idx)
+    array.remove(frz_lblArr, idx)
 
 // ── FRZ-5: SPAWN GUARD & DEDUPLICATION ───────────────────────────────────────
 // Gate: score >= min threshold, approved by Section 18, at least one primary
