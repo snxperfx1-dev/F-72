@@ -3496,9 +3496,13 @@ f_frzRemove(int idx) =>
     array.remove(frz_scoreArr, idx)
     array.remove(frz_classArr, idx)
     array.remove(frz_tierArr, idx)
-    array.remove(frz_typeArr, idx)
+    array.remove(frz_tierFArr, idx)
+    array.remove(frz_compArr, idx)
+    array.remove(frz_ownerArr, idx)
+    array.remove(frz_statusArr, idx)
+    array.remove(frz_idxArr, idx)
     array.remove(frz_boxArr, idx)
-    array.remove(frz_labelArr, idx)
+    array.remove(frz_lblArr, idx)
 
 // Helper: Dominant narrative (compressed ternary chain)
 f_getNarrative(int dir, float htfAl, string phase, float rotProb, string rotSt, string resSt) =>
@@ -5778,13 +5782,6 @@ if _frzN > 0
                 if not na(_lb2)
                     label.delete(_lb2)
                 f_frzRemove(_fi)
-                array.remove(frz_tierFArr, _fi)
-                array.remove(frz_compArr,  _fi)
-                array.remove(frz_ownerArr, _fi)
-                array.remove(frz_statusArr,_fi)
-                array.remove(frz_idxArr,   _fi)
-                array.remove(frz_boxArr,   _fi)
-                array.remove(frz_lblArr,   _fi)
 
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 19 — FRZ OWNERSHIP ENGINE  [Phase 2]
