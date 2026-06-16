@@ -3517,31 +3517,6 @@ if die_originOld and showLabels
 // SECTION 25 — DASHBOARD (3 panels with full section toggles)
 // ═══════════════
 
-// Helper: write a separator row spanning both columns
-f_sep(table t, int r, string lbl, string tsz) =>
-    table.cell(t, 0, r, lbl, text_color=_cW20, bgcolor=_cW80,
-         text_size=tsz == "tiny" ? size.tiny : tsz == "normal" ? size.normal : size.small)
-    table.cell(t, 1, r, "", bgcolor=_cW80)
-
-// Helper: write a separator row spanning the right column pair (cols 2-3)
-f_sep2(table t, int r, string lbl, string tsz) =>
-    table.cell(t, 2, r, lbl, text_color=_cW20, bgcolor=_cW80,
-         text_size=tsz == "tiny" ? size.tiny : tsz == "normal" ? size.normal : size.small)
-    table.cell(t, 3, r, "", bgcolor=_cW80)
-
-// Shared colour helpers (re-declared as functions to avoid forward-ref issues)
-f_sc(float v) =>
-    v >= 85 ? #00ff88 : v >= 70 ? color.lime : v >= 40 ? color.yellow : color.red
-
-f_sl(float v) =>
-    v >= 85 ? "Exceptional" : v >= 70 ? "Strong" : v >= 40 ? "Neutral" : "Weak"
-
-// Helper: dashboard row writer (label+value pair, returns next row index)
-f_r(table t, int r, string lbl, string val, color c) =>
-    table.cell(t, 0, r, lbl, text_color=color.silver, text_size=size.small)
-    table.cell(t, 1, r, val, text_color=c, text_size=size.small)
-    r + 1
-
 // Text size string → Pine size constant
 string _ts = dashTextSize
 string _szA = _ts == "tiny" ? size.tiny : size.small
@@ -3552,6 +3527,51 @@ color _cW20 = color.new(color.white, 20)
 color _cW80 = color.new(color.white, 80)
 color _cR92 = color.new(color.red, 92)
 color _cT92 = color.new(color.teal, 92)
+
+// Helper: write a separator row spanning both columns (returns next row index)
+f_sep(table t, int r, string lbl, string tsz) =>
+    table.cell(t, 0, r, lbl, text_color=_cW20, bgcolor=_cW80,
+         text_size=tsz == "tiny" ? size.tiny : tsz == "normal" ? size.normal : size.small)
+    table.cell(t, 1, r, "", bgcolor=_cW80)
+    r + 1
+
+// Helper: write a separator row spanning the right column pair (cols 2-3)
+f_sep2(table t, int r, string lbl, string tsz) =>
+    table.cell(t, 2, r, lbl, text_color=_cW20, bgcolor=_cW80,
+         text_size=tsz == "tiny" ? size.tiny : tsz == "normal" ? size.normal : size.small)
+    table.cell(t, 3, r, "", bgcolor=_cW80)
+    r + 1
+
+// Shared colour helpers (re-declared as functions to avoid forward-ref issues)
+f_sc(float v) =>
+    v >= 85 ? #00ff88 : v >= 70 ? color.lime : v >= 40 ? color.yellow : color.red
+
+f_sl(float v) =>
+    v >= 85 ? "Exceptional" : v >= 70 ? "Strong" : v >= 40 ? "Neutral" : "Weak"
+
+// Helper: dashboard row writer (label+value pair, returns next row index)
+f_r(table t, int r, string lbl, string val, color c) =>
+    table.cell(t, 0, r, lbl, text_color=color.silver, text_size=_szA)
+    table.cell(t, 1, r, val, text_color=c, text_size=_szA)
+    r + 1
+
+// Helper: dashboard row writer with normal-sized value cell (returns next row)
+f_rb(table t, int r, string lbl, string val, color c) =>
+    table.cell(t, 0, r, lbl, text_color=color.silver, text_size=_szA)
+    table.cell(t, 1, r, val, text_color=c, text_size=_ts == "tiny" ? size.tiny : size.normal)
+    r + 1
+
+// Helper: dashboard row writer for the right column pair (cols 2-3)
+f_r2(table t, int r, string lbl, string val, color c) =>
+    table.cell(t, 2, r, lbl, text_color=color.silver, text_size=_szA)
+    table.cell(t, 3, r, val, text_color=c, text_size=_szA)
+    r + 1
+
+// Helper: compact command-dashboard row (gray label). _szA === local _z by value.
+f_cd(table t, int r, string lbl, string val, color c) =>
+    table.cell(t, 0, r, lbl, text_color=color.gray, text_size=_szA)
+    table.cell(t, 1, r, val, text_color=c, text_size=_szA)
+    r + 1
 
 // ────────────────────
 // DASHBOARD PANELS A/B/C/FU — wrapped in function to satisfy body-length limit
@@ -3609,8 +3629,7 @@ f_renderDashABC() =>
             _ra := _ra + 1
 
         if true
-            f_sep(dashA, _ra, "TRADE DIRECTIVE", _ts)
-            _ra := _ra + 1
+            _ra := f_sep(dashA, _ra, "TRADE DIRECTIVE", _ts)
             table.cell(dashA, 0, _ra, "ACTION",
                  text_color=color.white, bgcolor=directiveBg,
                  text_size=_szA)
@@ -3618,142 +3637,39 @@ f_renderDashABC() =>
                  text_color=directiveCol, bgcolor=directiveBg,
                  text_size=_szA)
             _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Engine",
-                 text_color=color.silver,
-                 text_size=_szA)
-            table.cell(dashA, 1, _ra, engineArmed ? "Armed" : "Locked",
-                 text_color=engineArmed ? color.lime : color.orange,
-                 text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_r(dashA, _ra, "Engine", engineArmed ? "Armed" : "Locked", engineArmed ? color.lime : color.orange)
 
         if true
-            f_sep(dashA, _ra, "WAVE CONTEXT", _ts)
-            _ra := _ra + 1
+            _ra := f_sep(dashA, _ra, "WAVE CONTEXT", _ts)
             // ── L0: What Wave Price Is Trying To Make ─────────────────────────
-            table.cell(dashA, 0, _ra, "L0 Target",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra, l0_targetWave,
-                 text_color=direction >= 0 ? color.teal : color.red,
-                 text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_r(dashA, _ra, "L0 Target", l0_targetWave, direction >= 0 ? color.teal : color.red)
             // ── L0: Current Phase Within Curve Cycle ──────────────────────────
-            table.cell(dashA, 0, _ra, "L0 Phase [IE1A]",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra, ie1a_currentPhase,
-                 text_color=phCol,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "IE1A BOS",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 not ie1a_bos1Active ? "No BOS" :
-                 ie1a_bos2Active     ? "BOS-2 ✓" : "BOS-1 ✓",
-                 text_color=ie1a_bos2Active ? #00ff88 : ie1a_bos1Active ? color.yellow : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "IE1A Induction",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 ie1a_inductionOriginBroken ? "Origin Broken ✓" :
-                 not na(ie1a_inductionExtreme) ? "Extreme Set" :
-                 not na(ie1a_inductionOrigin)  ? "Origin Set"  : "–",
-                 text_color=ie1a_inductionOriginBroken ? #00ff88 :
-                            not na(ie1a_inductionExtreme) ? color.yellow : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Wave Type",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 isRecursiveWave ? "Entry #" + str.tostring(entryCycle) + " Recursive" : "Parent wave",
-                 text_color=isRecursiveWave ? #00ff88 : color.teal,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Next Expected",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 expectedNextPhase + " " + str.tostring(math.round(expectedNextProb)) + "%",
-                 text_color=color.yellow, text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_r(dashA, _ra, "L0 Phase [IE1A]", ie1a_currentPhase, phCol)
+            _ra := f_r(dashA, _ra, "IE1A BOS", not ie1a_bos1Active ? "No BOS" : ie1a_bos2Active ? "BOS-2 ✓" : "BOS-1 ✓", ie1a_bos2Active ? #00ff88 : ie1a_bos1Active ? color.yellow : color.gray)
+            _ra := f_r(dashA, _ra, "IE1A Induction", ie1a_inductionOriginBroken ? "Origin Broken ✓" : not na(ie1a_inductionExtreme) ? "Extreme Set" : not na(ie1a_inductionOrigin) ? "Origin Set" : "–", ie1a_inductionOriginBroken ? #00ff88 : not na(ie1a_inductionExtreme) ? color.yellow : color.gray)
+            _ra := f_r(dashA, _ra, "Wave Type", isRecursiveWave ? "Entry #" + str.tostring(entryCycle) + " Recursive" : "Parent wave", isRecursiveWave ? #00ff88 : color.teal)
+            _ra := f_r(dashA, _ra, "Next Expected", expectedNextPhase + " " + str.tostring(math.round(expectedNextProb)) + "%", color.yellow)
 
         if true
-            f_sep(dashA, _ra, "MARKET STATE", _ts)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Direction",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 direction == 1 ? "Long ▲" : direction == -1 ? "Short ▼" : "None",
-                 text_color=direction == 1 ? color.teal : direction == -1 ? color.red : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Structure",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra, stStr,
-                 text_color=structBias == 1 ? color.lime : structBias == -1 ? color.red : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_sep(dashA, _ra, "MARKET STATE", _ts)
+            _ra := f_r(dashA, _ra, "Direction", direction == 1 ? "Long ▲" : direction == -1 ? "Short ▼" : "None", direction == 1 ? color.teal : direction == -1 ? color.red : color.gray)
+            _ra := f_r(dashA, _ra, "Structure", stStr, structBias == 1 ? color.lime : structBias == -1 ? color.red : color.gray)
             bool dirStructAlign = direction != 0 and direction == structBias
-            table.cell(dashA, 0, _ra, "Alignment",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 direction == 0 ? "–" : dirStructAlign ? "✓ Aligned" : "✗ Diverged",
-                 text_color=direction == 0 ? color.gray : dirStructAlign ? color.lime : color.orange,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "HTF Bias",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 htfAlign == 1 ? "Bull ▲▲" : htfAlign == -1 ? "Bear ▼▼" : "Mixed",
-                 text_color=htfAlign == 1 ? color.lime : htfAlign == -1 ? color.red : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_r(dashA, _ra, "Alignment", direction == 0 ? "–" : dirStructAlign ? "✓ Aligned" : "✗ Diverged", direction == 0 ? color.gray : dirStructAlign ? color.lime : color.orange)
+            _ra := f_r(dashA, _ra, "HTF Bias", htfAlign == 1 ? "Bull ▲▲" : htfAlign == -1 ? "Bear ▼▼" : "Mixed", htfAlign == 1 ? color.lime : htfAlign == -1 ? color.red : color.gray)
             // ERF: Energy State row in Market State
-            table.cell(dashA, 0, _ra, "Energy State [ERF]",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra, eae_energyState + " | " + re_resolutionState,
-                 text_color=re_resolutionState == "RESOLVED" ? #00ff88 :
-                            re_resolutionState == "PARTIALLY RESOLVED" ? color.yellow : color.orange,
-                 text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_r(dashA, _ra, "Energy State [ERF]", eae_energyState + " | " + re_resolutionState, re_resolutionState == "RESOLVED" ? #00ff88 : re_resolutionState == "PARTIALLY RESOLVED" ? color.yellow : color.orange)
 
         if true
-            f_sep(dashA, _ra, "HTF BELIEF STACK", _ts)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "TF1 (" + tf1 + ") Exp",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 str.tostring(math.round(expScr_tf1)) + " " + (dir_tf1 == 1 ? "▲" : dir_tf1 == -1 ? "▼" : "·"),
-                 text_color=dir_tf1 == 1 ? color.lime : dir_tf1 == -1 ? color.red : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "TF2 (" + tf2 + ") Exp",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 str.tostring(math.round(expScr_tf2)) + " " + (dir_tf2 == 1 ? "▲" : dir_tf2 == -1 ? "▼" : "·"),
-                 text_color=dir_tf2 == 1 ? color.lime : dir_tf2 == -1 ? color.red : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "HTF Interp",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra, htf_PrimaryInterp,
-                 text_color=htfAlign == 1 ? color.lime : htfAlign == -1 ? color.red : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Resonance",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra, str.tostring(resonance) + " / 2",
-                 text_color=resonance == 2 ? #00ff88 : color.gray,
-                 text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_sep(dashA, _ra, "HTF BELIEF STACK", _ts)
+            _ra := f_r(dashA, _ra, "TF1 (" + tf1 + ") Exp", str.tostring(math.round(expScr_tf1)) + " " + (dir_tf1 == 1 ? "▲" : dir_tf1 == -1 ? "▼" : "·"), dir_tf1 == 1 ? color.lime : dir_tf1 == -1 ? color.red : color.gray)
+            _ra := f_r(dashA, _ra, "TF2 (" + tf2 + ") Exp", str.tostring(math.round(expScr_tf2)) + " " + (dir_tf2 == 1 ? "▲" : dir_tf2 == -1 ? "▼" : "·"), dir_tf2 == 1 ? color.lime : dir_tf2 == -1 ? color.red : color.gray)
+            _ra := f_r(dashA, _ra, "HTF Interp", htf_PrimaryInterp, htfAlign == 1 ? color.lime : htfAlign == -1 ? color.red : color.gray)
+            _ra := f_r(dashA, _ra, "Resonance", str.tostring(resonance) + " / 2", resonance == 2 ? #00ff88 : color.gray)
 
         if true
-            f_sep(dashA, _ra, "PHYSICS", _ts)
-            _ra := _ra + 1
-            table.cell(dashA, 0, _ra, "Velocity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashA, 1, _ra,
-                 str.tostring(math.round(velocityScore)) + "  " + f_sl(velocityScore),
-                 text_color=f_sc(velocityScore), text_size=_szA)
-            _ra := _ra + 1
+            _ra := f_sep(dashA, _ra, "PHYSICS", _ts)
+            _ra := f_r(dashA, _ra, "Velocity", str.tostring(math.round(velocityScore)) + " " + f_sl(velocityScore), f_sc(velocityScore))
 
         // ════ PANEL B ═════════════════════════════════════════════════════════════
         // V72: Panel B is diagnostic — gated behind Advanced Mode
@@ -3769,161 +3685,45 @@ f_renderDashABC() =>
             _rb := _rb + 1
 
         if dashAdvancedMode
-            f_sep(dashB, _rb, "SIMULTANEOUS BELIEFS", _ts)
-            _rb := _rb + 1
+            _rb := f_sep(dashB, _rb, "SIMULTANEOUS BELIEFS", _ts)
 
             // ── FIX: use display-safe d_* variables so NaN never reaches the table ──
-            table.cell(dashB, 0, _rb, "Expansion",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(d_expansionBelief)),
-                 text_color=f_sc(d_expansionBelief),
-                 text_size=_ts == "tiny" ? size.tiny : size.normal)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Convexity (Pre-Conv)",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(d_convexityBelief)),
-                 text_color=f_sc(d_convexityBelief),
-                 text_size=_ts == "tiny" ? size.tiny : size.normal)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "New High / New Low",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(d_creationBelief)),
-                 text_color=f_sc(d_creationBelief),
-                 text_size=_ts == "tiny" ? size.tiny : size.normal)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Absorption",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(d_absorptionBelief)),
-                 text_color=f_sc(d_absorptionBelief),
-                 text_size=_ts == "tiny" ? size.tiny : size.normal)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Retracement",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(d_retracementBelief)),
-                 text_color=f_sc(d_retracementBelief),
-                 text_size=_ts == "tiny" ? size.tiny : size.normal)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Demand Return",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(d_demandReturnBelief)),
-                 text_color=f_sc(d_demandReturnBelief),
-                 text_size=_ts == "tiny" ? size.tiny : size.normal)
-            _rb := _rb + 1
+            _rb := f_rb(dashB, _rb, "Expansion", str.tostring(math.round(d_expansionBelief)), f_sc(d_expansionBelief))
+            _rb := f_rb(dashB, _rb, "Convexity (Pre-Conv)", str.tostring(math.round(d_convexityBelief)), f_sc(d_convexityBelief))
+            _rb := f_rb(dashB, _rb, "New High / New Low", str.tostring(math.round(d_creationBelief)), f_sc(d_creationBelief))
+            _rb := f_rb(dashB, _rb, "Absorption", str.tostring(math.round(d_absorptionBelief)), f_sc(d_absorptionBelief))
+            _rb := f_rb(dashB, _rb, "Retracement", str.tostring(math.round(d_retracementBelief)), f_sc(d_retracementBelief))
+            _rb := f_rb(dashB, _rb, "Demand Return", str.tostring(math.round(d_demandReturnBelief)), f_sc(d_demandReturnBelief))
 
         if dashAdvancedMode
-            f_sep(dashB, _rb, "PHASE PROXIMITY", _ts)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Exp Proximity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(expansionProximity)),
-                 text_color=f_sc(expansionProximity), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Conv Proximity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(convexityProximity)),
-                 text_color=f_sc(convexityProximity), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Create Proximity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(creationProximity)),
-                 text_color=f_sc(creationProximity), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Absorb Proximity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(absorptionProximity)),
-                 text_color=f_sc(absorptionProximity), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Retr Proximity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(retracementProximity)),
-                 text_color=f_sc(retracementProximity), text_size=_szA)
-            _rb := _rb + 1
+            _rb := f_sep(dashB, _rb, "PHASE PROXIMITY", _ts)
+            _rb := f_r(dashB, _rb, "Exp Proximity", str.tostring(math.round(expansionProximity)), f_sc(expansionProximity))
+            _rb := f_r(dashB, _rb, "Conv Proximity", str.tostring(math.round(convexityProximity)), f_sc(convexityProximity))
+            _rb := f_r(dashB, _rb, "Create Proximity", str.tostring(math.round(creationProximity)), f_sc(creationProximity))
+            _rb := f_r(dashB, _rb, "Absorb Proximity", str.tostring(math.round(absorptionProximity)), f_sc(absorptionProximity))
+            _rb := f_r(dashB, _rb, "Retr Proximity", str.tostring(math.round(retracementProximity)), f_sc(retracementProximity))
 
         if dashAdvancedMode
-            f_sep(dashB, _rb, "CONVEXITY EVIDENCE", _ts)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Exp Pre-Conv",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, expansionPreConvSeen ? "Evidence" : "–",
-                 text_color=expansionPreConvSeen ? color.lime : color.orange,
-                 text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Exp Induction",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, expansionInductionConf ? "Evidence" : "–",
-                 text_color=expansionInductionConf ? color.lime : color.orange,
-                 text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Retr Pre-Conv",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, retracementPreConvSeen ? "Evidence" : "–",
-                 text_color=retracementPreConvSeen ? color.lime : color.orange,
-                 text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Retr Induction",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, retracementInductionConf ? "Evidence" : "–",
-                 text_color=retracementInductionConf ? color.lime : color.orange,
-                 text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Induc Type",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb,
-                 inducConfidence > 0 ? "Retr induction" : inducConfidence < 0 ? "False CHoCH" : "–",
-                 text_color=inducConfidence > 0 ? color.lime : inducConfidence < 0 ? color.red : color.gray,
-                 text_size=_szA)
-            _rb := _rb + 1
+            _rb := f_sep(dashB, _rb, "CONVEXITY EVIDENCE", _ts)
+            _rb := f_r(dashB, _rb, "Exp Pre-Conv", expansionPreConvSeen ? "Evidence" : "–", expansionPreConvSeen ? color.lime : color.orange)
+            _rb := f_r(dashB, _rb, "Exp Induction", expansionInductionConf ? "Evidence" : "–", expansionInductionConf ? color.lime : color.orange)
+            _rb := f_r(dashB, _rb, "Retr Pre-Conv", retracementPreConvSeen ? "Evidence" : "–", retracementPreConvSeen ? color.lime : color.orange)
+            _rb := f_r(dashB, _rb, "Retr Induction", retracementInductionConf ? "Evidence" : "–", retracementInductionConf ? color.lime : color.orange)
+            _rb := f_r(dashB, _rb, "Induc Type", inducConfidence > 0 ? "Retr induction" : inducConfidence < 0 ? "False CHoCH" : "–", inducConfidence > 0 ? color.lime : inducConfidence < 0 ? color.red : color.gray)
 
         if dashAdvancedMode
-            f_sep(dashB, _rb, "PHYSICS OBSERVER", _ts)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Expansion",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(obs_ExpansionScore)),
-                 text_color=f_sc(obs_ExpansionScore), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Decay",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(obs_DecayScore)),
-                 text_color=f_sc(obs_DecayScore), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Curvature",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(obs_CurvatureScore)),
-                 text_color=f_sc(obs_CurvatureScore), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Absorption",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(obs_AbsorptionScore)),
-                 text_color=f_sc(obs_AbsorptionScore), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Liquidity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(obs_LiquidityScore)),
-                 text_color=f_sc(obs_LiquidityScore), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Consensus",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb, str.tostring(math.round(physicsConsensus)),
-                 text_color=f_sc(physicsConsensus), text_size=_szA)
-            _rb := _rb + 1
+            _rb := f_sep(dashB, _rb, "PHYSICS OBSERVER", _ts)
+            _rb := f_r(dashB, _rb, "Expansion", str.tostring(math.round(obs_ExpansionScore)), f_sc(obs_ExpansionScore))
+            _rb := f_r(dashB, _rb, "Decay", str.tostring(math.round(obs_DecayScore)), f_sc(obs_DecayScore))
+            _rb := f_r(dashB, _rb, "Curvature", str.tostring(math.round(obs_CurvatureScore)), f_sc(obs_CurvatureScore))
+            _rb := f_r(dashB, _rb, "Absorption", str.tostring(math.round(obs_AbsorptionScore)), f_sc(obs_AbsorptionScore))
+            _rb := f_r(dashB, _rb, "Liquidity", str.tostring(math.round(obs_LiquidityScore)), f_sc(obs_LiquidityScore))
+            _rb := f_r(dashB, _rb, "Consensus", str.tostring(math.round(physicsConsensus)), f_sc(physicsConsensus))
 
         if dashAdvancedMode
-            f_sep(dashB, _rb, "GEOMETRY", _ts)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Remaining Room",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb,
-                 na(availableSpace) ? "–" : str.tostring(math.round(availableSpace)) + "%  " + cycleCapacity,
-                 text_color=f_sc(nz(availableSpace, 0)), text_size=_szA)
-            _rb := _rb + 1
-            table.cell(dashB, 0, _rb, "Geo Capacity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashB, 1, _rb,
-                 geoFullConvexityPossible ? "Full Conv" : geoPartialConvexityPossible ? "Partial Conv" : "Absorption only",
-                 text_color=geoFullConvexityPossible ? color.lime : geoPartialConvexityPossible ? color.yellow : color.orange,
-                 text_size=_szA)
-            _rb := _rb + 1
+            _rb := f_sep(dashB, _rb, "GEOMETRY", _ts)
+            _rb := f_r(dashB, _rb, "Remaining Room", na(availableSpace) ? "–" : str.tostring(math.round(availableSpace)) + "% " + cycleCapacity, f_sc(nz(availableSpace, 0)))
+            _rb := f_r(dashB, _rb, "Geo Capacity", geoFullConvexityPossible ? "Full Conv" : geoPartialConvexityPossible ? "Partial Conv" : "Absorption only", geoFullConvexityPossible ? color.lime : geoPartialConvexityPossible ? color.yellow : color.orange)
 
         // ════ PANEL C ═════════════════════════════════════════════════════════════
         int _rc = 0
@@ -3936,171 +3736,53 @@ f_renderDashABC() =>
             _rc := _rc + 1
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "HYPOTHESIS ENGINE", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Expansion",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(hyp_LateExpansion_N)) + "%",
-                 text_color=f_sc(hyp_LateExpansion_N), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Exp Pre-Convexity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(hyp_EarlyConvexity_N)) + "%",
-                 text_color=f_sc(hyp_EarlyConvexity_N), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "New High / New Low",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(hyp_CreationForming_N)) + "%",
-                 text_color=f_sc(hyp_CreationForming_N), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Absorption",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(hyp_AbsorptionActive_N)) + "%",
-                 text_color=f_sc(hyp_AbsorptionActive_N), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Retracement",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(hyp_RetracementActive_N)) + "%",
-                 text_color=f_sc(hyp_RetracementActive_N), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Demand Return",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(hyp_DemandReturn_N)) + "%",
-                 text_color=f_sc(hyp_DemandReturn_N), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "HYPOTHESIS ENGINE", _ts)
+            _rc := f_r(dashC, _rc, "Expansion", str.tostring(math.round(hyp_LateExpansion_N)) + "%", f_sc(hyp_LateExpansion_N))
+            _rc := f_r(dashC, _rc, "Exp Pre-Convexity", str.tostring(math.round(hyp_EarlyConvexity_N)) + "%", f_sc(hyp_EarlyConvexity_N))
+            _rc := f_r(dashC, _rc, "New High / New Low", str.tostring(math.round(hyp_CreationForming_N)) + "%", f_sc(hyp_CreationForming_N))
+            _rc := f_r(dashC, _rc, "Absorption", str.tostring(math.round(hyp_AbsorptionActive_N)) + "%", f_sc(hyp_AbsorptionActive_N))
+            _rc := f_r(dashC, _rc, "Retracement", str.tostring(math.round(hyp_RetracementActive_N)) + "%", f_sc(hyp_RetracementActive_N))
+            _rc := f_r(dashC, _rc, "Demand Return", str.tostring(math.round(hyp_DemandReturn_N)) + "%", f_sc(hyp_DemandReturn_N))
 
         if true
-            f_sep(dashC, _rc, "PREDICTION ENGINE", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Expected Next",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, expectedNextPhase,
-                 text_color=color.yellow, text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Probability",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(expectedNextProb)) + "%",
-                 text_color=f_sc(expectedNextProb), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "PREDICTION ENGINE", _ts)
+            _rc := f_r(dashC, _rc, "Expected Next", expectedNextPhase, color.yellow)
+            _rc := f_r(dashC, _rc, "Probability", str.tostring(math.round(expectedNextProb)) + "%", f_sc(expectedNextProb))
 
         if true
-            f_sep(dashC, _rc, "VALIDATION ENGINE", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Accuracy 10",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(predAcc10)) + "%",
-                 text_color=f_sc(predAcc10), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Accuracy 25",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(predAcc25)) + "%",
-                 text_color=f_sc(predAcc25), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Accuracy 50",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(predAcc50)) + "%",
-                 text_color=f_sc(predAcc50), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Reliability",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(predReliability)) + "%",
-                 text_color=f_sc(predReliability), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "VALIDATION ENGINE", _ts)
+            _rc := f_r(dashC, _rc, "Accuracy 10", str.tostring(math.round(predAcc10)) + "%", f_sc(predAcc10))
+            _rc := f_r(dashC, _rc, "Accuracy 25", str.tostring(math.round(predAcc25)) + "%", f_sc(predAcc25))
+            _rc := f_r(dashC, _rc, "Accuracy 50", str.tostring(math.round(predAcc50)) + "%", f_sc(predAcc50))
+            _rc := f_r(dashC, _rc, "Reliability", str.tostring(math.round(predReliability)) + "%", f_sc(predReliability))
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "ADAPTIVE CONFIDENCE", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Model Confidence",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(modelConfidence)) + "%",
-                 text_color=f_sc(modelConfidence), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Wave Deviation",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc,
-                 str.tostring(math.round(waveDeviation)) + (deviationAlert ? "  ⚠" : ""),
-                 text_color=deviationAlert ? color.orange : f_sc(100 - waveDeviation),
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Physics Consensus",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(physicsConsensus)) + "%",
-                 text_color=f_sc(physicsConsensus), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "ADAPTIVE CONFIDENCE", _ts)
+            _rc := f_r(dashC, _rc, "Model Confidence", str.tostring(math.round(modelConfidence)) + "%", f_sc(modelConfidence))
+            _rc := f_r(dashC, _rc, "Wave Deviation", str.tostring(math.round(waveDeviation)) + (deviationAlert ? " ⚠" : ""), deviationAlert ? color.orange : f_sc(100 - waveDeviation))
+            _rc := f_r(dashC, _rc, "Physics Consensus", str.tostring(math.round(physicsConsensus)) + "%", f_sc(physicsConsensus))
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "M1 EARLY WARNING", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "M1 Signal",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, m1Warning,
-                 text_color=m1Warning == "CRITICAL" ? color.red :
-                            m1Warning == "HIGH"     ? color.orange :
-                            m1Warning == "MODERATE" ? color.yellow : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Exp Weakening",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, m1ExpansionWeak ? "YES ⚠" : "–",
-                 text_color=m1ExpansionWeak ? color.orange : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Conv Emerging",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, m1ConvexityEmer ? "YES" : "–",
-                 text_color=m1ConvexityEmer ? #c084fc : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Abs Emerging",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, m1AbsorptionEmer ? "YES" : "–",
-                 text_color=m1AbsorptionEmer ? color.aqua : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "M1 EARLY WARNING", _ts)
+            _rc := f_r(dashC, _rc, "M1 Signal", m1Warning, m1Warning == "CRITICAL" ? color.red : m1Warning == "HIGH" ? color.orange : m1Warning == "MODERATE" ? color.yellow : color.gray)
+            _rc := f_r(dashC, _rc, "Exp Weakening", m1ExpansionWeak ? "YES ⚠" : "–", m1ExpansionWeak ? color.orange : color.gray)
+            _rc := f_r(dashC, _rc, "Conv Emerging", m1ConvexityEmer ? "YES" : "–", m1ConvexityEmer ? #c084fc : color.gray)
+            _rc := f_r(dashC, _rc, "Abs Emerging", m1AbsorptionEmer ? "YES" : "–", m1AbsorptionEmer ? color.aqua : color.gray)
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "SETUP QUALITY", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Bayesian prob",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(finalProb)) + "%",
-                 text_color=finalProb > 70 ? color.lime : finalProb > 50 ? color.yellow : color.red,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Trade readiness",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(tradeReadiness)) + "%",
-                 text_color=f_sc(tradeReadiness), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Signal quality",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, grade,
-                 text_color=gradeCol, text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Edge filter",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, edgePassesFilter ? "✓ Pass" : "Filtered",
-                 text_color=edgePassesFilter ? color.lime : color.red,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "SETUP QUALITY", _ts)
+            _rc := f_r(dashC, _rc, "Bayesian prob", str.tostring(math.round(finalProb)) + "%", finalProb > 70 ? color.lime : finalProb > 50 ? color.yellow : color.red)
+            _rc := f_r(dashC, _rc, "Trade readiness", str.tostring(math.round(tradeReadiness)) + "%", f_sc(tradeReadiness))
+            _rc := f_r(dashC, _rc, "Signal quality", grade, gradeCol)
+            _rc := f_r(dashC, _rc, "Edge filter", edgePassesFilter ? "✓ Pass" : "Filtered", edgePassesFilter ? color.lime : color.red)
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "DIRECTION PROBABILITY", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Expansion",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(expansionProbability)) + " pts",
-                 text_color=f_sc(expansionProbability), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Reversal",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(reversalProbability)) + " pts",
-                 text_color=f_sc(reversalProbability), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "DIRECTION PROBABILITY", _ts)
+            _rc := f_r(dashC, _rc, "Expansion", str.tostring(math.round(expansionProbability)) + " pts", f_sc(expansionProbability))
+            _rc := f_r(dashC, _rc, "Reversal", str.tostring(math.round(reversalProbability)) + " pts", f_sc(reversalProbability))
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "LIVE OPPORTUNITY", _ts)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "LIVE OPPORTUNITY", _ts)
             table.cell(dashC, 0, _rc, "Buy score",
                  text_color=color.white, text_size=_szA)
             table.cell(dashC, 1, _rc, str.tostring(buyProb, "#.#") + "%",
@@ -4111,194 +3793,75 @@ f_renderDashABC() =>
             table.cell(dashC, 1, _rc, str.tostring(sellProb, "#.#") + "%",
                  text_color=color.red, text_size=_szA)
             _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Live edge",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, liveDirective,
-                 text_color=netEdgeAdjusted > 0 ? color.lime : color.red,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Net edge",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc,
-                 str.tostring(netEdgeAdjusted, "#.#") + "  " +
-                 (math.abs(netEdgeAdjusted) > 25 ? "Strong" : math.abs(netEdgeAdjusted) > 10 ? "Moderate" : "Weak"),
-                 text_color=netEdgeAdjusted > 0 ? color.lime : color.red,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Live edge", liveDirective, netEdgeAdjusted > 0 ? color.lime : color.red)
+            _rc := f_r(dashC, _rc, "Net edge", str.tostring(netEdgeAdjusted, "#.#") + " " + (math.abs(netEdgeAdjusted) > 25 ? "Strong" : math.abs(netEdgeAdjusted) > 10 ? "Moderate" : "Weak"), netEdgeAdjusted > 0 ? color.lime : color.red)
 
         if dashAdvancedMode
-            f_sep(dashC, _rc, "EXECUTION", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Wave Gen",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(waveGeneration),
-                 text_color=color.aqua, text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "EXECUTION", _ts)
+            _rc := f_r(dashC, _rc, "Wave Gen", str.tostring(waveGeneration), color.aqua)
 
         // ── DIE Dashboard additions (display-only fields) ──────────────────────
         if showDIE_Dashboard
-            f_sep(dashC, _rc, "DISPLAY INTELLIGENCE", _ts)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Display Mode",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, displayMode,
-                 text_color=displayMode == "Execution" ? color.lime :
-                            displayMode == "Context"   ? color.yellow : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Density",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, die_densityLevel + " (" + str.tostring(die_density100) + "/100b)",
-                 text_color=die_densityLevel == "Low"    ? color.lime   :
-                            die_densityLevel == "Medium" ? color.yellow : color.orange,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Active FU Blocks",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(die_activeFUCount),
-                 text_color=die_activeFUCount > 0 ? color.lime : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Entry Score",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(die_entryScore_safe)) + "%",
-                 text_color=f_sc(die_entryScore_safe), text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "Narrative",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, die_narrativeDir,
-                 text_color=die_narrCol, text_size=_szA)
-            _rc := _rc + 1
-            table.cell(dashC, 0, _rc, "FU Status",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, die_fuContrib,
-                 text_color=die_fuContrib == "FU CONFIRMED" ? #00ff88 :
-                            die_fuContrib == "FU ASSISTED"  ? color.yellow : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "DISPLAY INTELLIGENCE", _ts)
+            _rc := f_r(dashC, _rc, "Display Mode", displayMode, displayMode == "Execution" ? color.lime : displayMode == "Context" ? color.yellow : color.gray)
+            _rc := f_r(dashC, _rc, "Density", die_densityLevel + " (" + str.tostring(die_density100) + "/100b)", die_densityLevel == "Low" ? color.lime : die_densityLevel == "Medium" ? color.yellow : color.orange)
+            _rc := f_r(dashC, _rc, "Active FU Blocks", str.tostring(die_activeFUCount), die_activeFUCount > 0 ? color.lime : color.gray)
+            _rc := f_r(dashC, _rc, "Entry Score", str.tostring(math.round(die_entryScore_safe)) + "%", f_sc(die_entryScore_safe))
+            _rc := f_r(dashC, _rc, "Narrative", die_narrativeDir, die_narrCol)
+            _rc := f_r(dashC, _rc, "FU Status", die_fuContrib, die_fuContrib == "FU CONFIRMED" ? #00ff88 : die_fuContrib == "FU ASSISTED" ? color.yellow : color.gray)
 
         // ── ENERGY RESOLUTION FRAMEWORK PANEL ────────────────────────────────
         if showERF_Dashboard
-            f_sep(dashC, _rc, "ENERGY RESOLUTION FRAMEWORK", _ts)
-            _rc := _rc + 1
+            _rc := f_sep(dashC, _rc, "ENERGY RESOLUTION FRAMEWORK", _ts)
 
             // Energy State
-            table.cell(dashC, 0, _rc, "Energy State",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, eae_energyState,
-                 text_color=eae_energyState == "Accumulating" ? color.yellow :
-                            eae_energyState == "Cleaning"     ? #c084fc     :
-                            eae_energyState == "Delivering"   ? color.lime  :
-                            eae_energyState == "Resolving"    ? color.aqua  : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Energy State", eae_energyState, eae_energyState == "Accumulating" ? color.yellow : eae_energyState == "Cleaning" ? #c084fc : eae_energyState == "Delivering" ? color.lime : eae_energyState == "Resolving" ? color.aqua : color.gray)
 
             // Cleaning State (EDE)
-            table.cell(dashC, 0, _rc, "Cleaning State",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, ede_cleaningState,
-                 text_color=ede_state >= 2 and ede_state <= 4 ? #c084fc : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Cleaning State", ede_cleaningState, ede_state >= 2 and ede_state <= 4 ? #c084fc : color.gray)
 
             // Dissipation Progress
-            table.cell(dashC, 0, _rc, "Dissipation %",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(ede_dissipationProgress)) + "%",
-                 text_color=f_sc(ede_dissipationProgress), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Dissipation %", str.tostring(math.round(ede_dissipationProgress)) + "%", f_sc(ede_dissipationProgress))
 
             // Messy = Dissipation recognition
-            table.cell(dashC, 0, _rc, "Messy = Dissipation",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, ede_messyPriceIsDissipation ? "✓ YES" : "–",
-                 text_color=ede_messyPriceIsDissipation ? color.lime : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Messy = Dissipation", ede_messyPriceIsDissipation ? "✓ YES" : "–", ede_messyPriceIsDissipation ? color.lime : color.gray)
 
             // Resolution State (RE)
-            table.cell(dashC, 0, _rc, "Resolution State",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, re_resolutionState,
-                 text_color=re_resolutionState == "RESOLVED"           ? #00ff88    :
-                            re_resolutionState == "PARTIALLY RESOLVED"  ? color.yellow : color.red,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Resolution State", re_resolutionState, re_resolutionState == "RESOLVED" ? #00ff88 : re_resolutionState == "PARTIALLY RESOLVED" ? color.yellow : color.red)
 
             // Residual Energy
-            table.cell(dashC, 0, _rc, "Residual Energy",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(re_residualEnergyScore)),
-                 text_color=re_residualEnergyScore > 60 ? color.red :
-                            re_residualEnergyScore > 30 ? color.yellow : color.lime,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Residual Energy", str.tostring(math.round(re_residualEnergyScore)), re_residualEnergyScore > 60 ? color.red : re_residualEnergyScore > 30 ? color.yellow : color.lime)
 
             // Recursive Completion Score
-            table.cell(dashC, 0, _rc, "Recursive Completion",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc,
-                 str.tostring(re_completedCycles) + "/" + str.tostring(re_expectedCycles) +
-                 "  " + str.tostring(math.round(re_recursiveCompletionScore)) + "%",
-                 text_color=f_sc(re_recursiveCompletionScore), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Recursive Completion", str.tostring(re_completedCycles) + "/" + str.tostring(re_expectedCycles) + " " + str.tostring(math.round(re_recursiveCompletionScore)) + "%", f_sc(re_recursiveCompletionScore))
 
             // Revisit Probability
-            table.cell(dashC, 0, _rc, "Revisit Probability",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(re_revisitProbability)) + "%",
-                 text_color=re_revisitProbability > 70 ? color.red :
-                            re_revisitProbability > 40 ? color.orange : color.lime,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Revisit Probability", str.tostring(math.round(re_revisitProbability)) + "%", re_revisitProbability > 70 ? color.red : re_revisitProbability > 40 ? color.orange : color.lime)
 
             // Primary Attractor (EAE)
-            table.cell(dashC, 0, _rc, "Primary Attractor",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, eae_primaryAttractorLabel,
-                 text_color=eae_primaryAttractorScore > 60 ? #00ffcc :
-                            eae_primaryAttractorScore > 30 ? color.yellow : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Primary Attractor", eae_primaryAttractorLabel, eae_primaryAttractorScore > 60 ? #00ffcc : eae_primaryAttractorScore > 30 ? color.yellow : color.gray)
 
             // Attractor Score
-            table.cell(dashC, 0, _rc, "Attractor Score",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(eae_primaryAttractorScore)) + "%",
-                 text_color=f_sc(eae_primaryAttractorScore), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Attractor Score", str.tostring(math.round(eae_primaryAttractorScore)) + "%", f_sc(eae_primaryAttractorScore))
 
             // Rotation Suppression
-            table.cell(dashC, 0, _rc, "Rotation Suppress",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, erf_suppressRotation ? "ACTIVE (Cleaning)" : "–",
-                 text_color=erf_suppressRotation ? color.orange : color.gray,
-                 text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Rotation Suppress", erf_suppressRotation ? "ACTIVE (Cleaning)" : "–", erf_suppressRotation ? color.orange : color.gray)
 
             // ERF Confidence
-            table.cell(dashC, 0, _rc, "ERF Confidence",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(erf_confidence)) + "%",
-                 text_color=f_sc(erf_confidence), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "ERF Confidence", str.tostring(math.round(erf_confidence)) + "%", f_sc(erf_confidence))
 
             // Dissipation Confidence
-            table.cell(dashC, 0, _rc, "Dissipation Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashC, 1, _rc, str.tostring(math.round(erf_dissipationConfidence)) + "%",
-                 text_color=f_sc(erf_dissipationConfidence), text_size=_szA)
-            _rc := _rc + 1
+            _rc := f_r(dashC, _rc, "Dissipation Conf", str.tostring(math.round(erf_dissipationConfidence)) + "%", f_sc(erf_dissipationConfidence))
 
         // ── FU Order Blocks Dashboard Panel ───────────────────────────────────
-        if showDFU_Panel
+        if dashAdvancedMode
             var table dashFU = table.new(position.middle_right, 2, 12,
                  bgcolor=color.new(#0a0a12, 5),
                  border_color=_cW30, border_width=1,
                  frame_color=_cW20, frame_width=1)
 
             int _rf = 0
-            if showDFU_Header
+            if true
                 table.cell(dashFU, 0, _rf, "FU ORDER BLOCKS",
                      text_color=color.white, bgcolor=color.new(#0a0a30, 0),
                      text_size=_szA)
@@ -4307,63 +3870,23 @@ f_renderDashABC() =>
                      text_size=_szA)
                 _rf := _rf + 1
 
-            if showDFU_Stats
-                f_sep(dashFU, _rf, "FU STATISTICS", _ts)
-                _rf := _rf + 1
-                table.cell(dashFU, 0, _rf, "Active Blocks",
-                     text_color=color.silver, text_size=_szA)
-                table.cell(dashFU, 1, _rf, str.tostring(die_activeFUCount),
-                     text_color=die_activeFUCount > 0 ? color.lime : color.gray,
-                     text_size=_szA)
-                _rf := _rf + 1
-                table.cell(dashFU, 0, _rf, "Bull FU Active",
-                     text_color=color.silver, text_size=_szA)
-                table.cell(dashFU, 1, _rf, die_anyBullFUActive ? "YES ▲" : "–",
-                     text_color=die_anyBullFUActive ? color.lime : color.gray,
-                     text_size=_szA)
-                _rf := _rf + 1
-                table.cell(dashFU, 0, _rf, "Bear FU Active",
-                     text_color=color.silver, text_size=_szA)
-                table.cell(dashFU, 1, _rf, die_anyBearFUActive ? "YES ▼" : "–",
-                     text_color=die_anyBearFUActive ? color.red : color.gray,
-                     text_size=_szA)
-                _rf := _rf + 1
-                table.cell(dashFU, 0, _rf, "Confluence",
-                     text_color=color.silver, text_size=_szA)
-                table.cell(dashFU, 1, _rf,
-                     die_entryFUConfluence ? "⚡ ENTRY+FU" : "–",
-                     text_color=die_entryFUConfluence ? #ffdd00 : color.gray,
-                     text_size=_szA)
-                _rf := _rf + 1
+            if true
+                _rf := f_sep(dashFU, _rf, "FU STATISTICS", _ts)
+                _rf := f_r(dashFU, _rf, "Active Blocks", str.tostring(die_activeFUCount), die_activeFUCount > 0 ? color.lime : color.gray)
+                _rf := f_r(dashFU, _rf, "Bull FU Active", die_anyBullFUActive ? "YES ▲" : "–", die_anyBullFUActive ? color.lime : color.gray)
+                _rf := f_r(dashFU, _rf, "Bear FU Active", die_anyBearFUActive ? "YES ▼" : "–", die_anyBearFUActive ? color.red : color.gray)
+                _rf := f_r(dashFU, _rf, "Confluence", die_entryFUConfluence ? "⚡ ENTRY+FU" : "–", die_entryFUConfluence ? #ffdd00 : color.gray)
 
-            if showDFU_LastBlock
-                f_sep(dashFU, _rf, "LAST FU BLOCK", _ts)
-                _rf := _rf + 1
+            if true
+                _rf := f_sep(dashFU, _rf, "LAST FU BLOCK", _ts)
                 int _fuSz = array.size(fu_dir)
                 if _fuSz > 0
                     int _lastFuDir = array.get(fu_dir, _fuSz - 1)
                     string _lastFuSt = array.get(fu_state, _fuSz - 1)
                     int _lastFuAge  = bar_index - array.get(fu_birthBar, _fuSz - 1)
-                    table.cell(dashFU, 0, _rf, "Direction",
-                         text_color=color.silver, text_size=_szA)
-                    table.cell(dashFU, 1, _rf, _lastFuDir == 1 ? "Bull ▲" : "Bear ▼",
-                         text_color=_lastFuDir == 1 ? color.lime : color.red,
-                         text_size=_szA)
-                    _rf := _rf + 1
-                    table.cell(dashFU, 0, _rf, "State",
-                         text_color=color.silver, text_size=_szA)
-                    table.cell(dashFU, 1, _rf, _lastFuSt,
-                         text_color=_lastFuSt == "Interacting" ? color.yellow :
-                                    _lastFuSt == "Fresh"       ? color.lime   :
-                                    _lastFuSt == "Exhausted"   ? color.gray   : color.silver,
-                         text_size=_szA)
-                    _rf := _rf + 1
-                    table.cell(dashFU, 0, _rf, "Age (bars)",
-                         text_color=color.silver, text_size=_szA)
-                    table.cell(dashFU, 1, _rf, str.tostring(_lastFuAge),
-                         text_color=_lastFuAge < 10 ? color.lime : color.gray,
-                         text_size=_szA)
-                    _rf := _rf + 1
+                    _rf := f_r(dashFU, _rf, "Direction", _lastFuDir == 1 ? "Bull ▲" : "Bear ▼", _lastFuDir == 1 ? color.lime : color.red)
+                    _rf := f_r(dashFU, _rf, "State", _lastFuSt, _lastFuSt == "Interacting" ? color.yellow : _lastFuSt == "Fresh" ? color.lime : _lastFuSt == "Exhausted" ? color.gray : color.silver)
+                    _rf := f_r(dashFU, _rf, "Age (bars)", str.tostring(_lastFuAge), _lastFuAge < 10 ? color.lime : color.gray)
                 else
                     table.cell(dashFU, 0, _rf, "No FU blocks detected",
                          text_color=color.gray, text_size=_szA)
@@ -4824,7 +4347,7 @@ f_renderDashP3() =>
              border_color=_cW30, border_width=1,
              frame_color=_cW20, frame_width=1)
 
-        if showDP3_Header and dashAdvancedMode
+        if dashAdvancedMode
             table.cell(dashP3, 0, 0, "RECURSIVE WAVE INTEL v71",
                  text_color=color.white, bgcolor=color.new(#10103a, 0),
                  text_size=_szA)
@@ -4843,297 +4366,84 @@ f_renderDashP3() =>
 
         // ═══════════════ LEFT COLUMN GROUP (columns 0-1) ═══════════════
 
-        if showDP3_Narrative and dashAdvancedMode
-            f_sep(dashP3, _rpL, "WAVE NARRATIVE", _ts)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "HTF Structure",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, narr_grandchild,
-                 text_color=color.yellow, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Child Wave",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, narr_child,
-                 text_color=color.aqua, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Primary Wave",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, narr_primary,
-                 text_color=color.lime, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "M1 Sensor",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, narr_micro,
-                 text_color=color.new(#c084fc, 0), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Outcome",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, narr_outcome,
-                 text_color=color.white, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Fractal Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL,
-                 str.tostring(math.round(fractalConfidence)) + "%  " + fractalConfLabel,
-                 text_color=f_sc(fractalConfidence), text_size=_szA)
-            _rpL := _rpL + 1
+        if dashAdvancedMode
+            _rpL := f_sep(dashP3, _rpL, "WAVE NARRATIVE", _ts)
+            _rpL := f_r(dashP3, _rpL, "HTF Structure", narr_grandchild, color.yellow)
+            _rpL := f_r(dashP3, _rpL, "Child Wave", narr_child, color.aqua)
+            _rpL := f_r(dashP3, _rpL, "Primary Wave", narr_primary, color.lime)
+            _rpL := f_r(dashP3, _rpL, "M1 Sensor", narr_micro, color.new(#c084fc, 0))
+            _rpL := f_r(dashP3, _rpL, "Outcome", narr_outcome, color.white)
+            _rpL := f_r(dashP3, _rpL, "Fractal Conf", str.tostring(math.round(fractalConfidence)) + "% " + fractalConfLabel, f_sc(fractalConfidence))
 
-        if showDP3_Nested and dashAdvancedMode
-            f_sep(dashP3, _rpL, "NESTED WAVE RELATIONSHIPS", _ts)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Parent (HTF)",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, l2_targetWave + "\n" + l2_currentPhase,
-                 text_color=color.yellow, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Child (ITF)",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, l1_targetWave + "\n" + l1_currentPhase,
-                 text_color=color.aqua, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Grandchild (TF)",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, l0_targetWave + "\n" + l0_currentPhase,
-                 text_color=color.lime, text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "P→C Relation",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, parentChildRelationship,
-                 text_color=parentChildHarmonic ? color.lime : parentState == childState ? color.yellow : color.orange,
-                 text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "C→GC Relation",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, childGrandchildRelationship,
-                 text_color=childGrandchildHarmonic ? color.lime : color.orange,
-                 text_size=_szA)
-            _rpL := _rpL + 1
+        if dashAdvancedMode
+            _rpL := f_sep(dashP3, _rpL, "NESTED WAVE RELATIONSHIPS", _ts)
+            _rpL := f_r(dashP3, _rpL, "Parent (HTF)", l2_targetWave + "\n" + l2_currentPhase, color.yellow)
+            _rpL := f_r(dashP3, _rpL, "Child (ITF)", l1_targetWave + "\n" + l1_currentPhase, color.aqua)
+            _rpL := f_r(dashP3, _rpL, "Grandchild (TF)", l0_targetWave + "\n" + l0_currentPhase, color.lime)
+            _rpL := f_r(dashP3, _rpL, "P→C Relation", parentChildRelationship, parentChildHarmonic ? color.lime : parentState == childState ? color.yellow : color.orange)
+            _rpL := f_r(dashP3, _rpL, "C→GC Relation", childGrandchildRelationship, childGrandchildHarmonic ? color.lime : color.orange)
 
-        if showDP3_Dominance and dashAdvancedMode
-            f_sep(dashP3, _rpL, "WAVE DOMINANCE", _ts)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L2 HTF Dom",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(l2_dominance)) + "%",
-                 text_color=f_sc(l2_dominance), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L1 ITF Dom",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(l1_dominance)) + "%",
-                 text_color=f_sc(l1_dominance), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L0 Primary Dom",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(nz(l0_dominance, 0.0))) + "%",
-                 text_color=f_sc(nz(l0_dominance, 0.0)), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L3 Micro Dom",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(l3_dominance)) + "%",
-                 text_color=f_sc(l3_dominance), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Dominant Level",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, dominantWaveLevel,
-                 text_color=color.white, text_size=_szA)
-            _rpL := _rpL + 1
+        if dashAdvancedMode
+            _rpL := f_sep(dashP3, _rpL, "WAVE DOMINANCE", _ts)
+            _rpL := f_r(dashP3, _rpL, "L2 HTF Dom", str.tostring(math.round(l2_dominance)) + "%", f_sc(l2_dominance))
+            _rpL := f_r(dashP3, _rpL, "L1 ITF Dom", str.tostring(math.round(l1_dominance)) + "%", f_sc(l1_dominance))
+            _rpL := f_r(dashP3, _rpL, "L0 Primary Dom", str.tostring(math.round(nz(l0_dominance, 0.0))) + "%", f_sc(nz(l0_dominance, 0.0)))
+            _rpL := f_r(dashP3, _rpL, "L3 Micro Dom", str.tostring(math.round(l3_dominance)) + "%", f_sc(l3_dominance))
+            _rpL := f_r(dashP3, _rpL, "Dominant Level", dominantWaveLevel, color.white)
 
-        if showDP3_Fusion and dashAdvancedMode
-            f_sep(dashP3, _rpL, "MTF FUSION LAYER", _ts)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Fusion Interp",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, fusionInterpretation,
-                 text_color=htfTrendIntact ? color.lime : color.orange,
-                 text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Fusion Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(fusionConfidence)) + "%",
-                 text_color=f_sc(fusionConfidence), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "HTF Trend",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, htfTrendIntact ? "Intact ✓" : "Weakening ⚠",
-                 text_color=htfTrendIntact ? color.lime : color.orange,
-                 text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "LTF Reversal",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, ltfReversalForming ? "Forming ⚠" : "Not yet",
-                 text_color=ltfReversalForming ? color.orange : color.gray,
-                 text_size=_szA)
-            _rpL := _rpL + 1
+        if dashAdvancedMode
+            _rpL := f_sep(dashP3, _rpL, "MTF FUSION LAYER", _ts)
+            _rpL := f_r(dashP3, _rpL, "Fusion Interp", fusionInterpretation, htfTrendIntact ? color.lime : color.orange)
+            _rpL := f_r(dashP3, _rpL, "Fusion Conf", str.tostring(math.round(fusionConfidence)) + "%", f_sc(fusionConfidence))
+            _rpL := f_r(dashP3, _rpL, "HTF Trend", htfTrendIntact ? "Intact ✓" : "Weakening ⚠", htfTrendIntact ? color.lime : color.orange)
+            _rpL := f_r(dashP3, _rpL, "LTF Reversal", ltfReversalForming ? "Forming ⚠" : "Not yet", ltfReversalForming ? color.orange : color.gray)
 
-        if showDP3_Agreement and dashAdvancedMode
-            f_sep(dashP3, _rpL, "WAVE AGREEMENT", _ts)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L0-L1 Agreement",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(waveAgreement_l0l1)) + "%",
-                 text_color=f_sc(waveAgreement_l0l1), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L1-L2 Agreement",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(waveAgreement_l1l2)) + "%",
-                 text_color=f_sc(waveAgreement_l1l2), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "L0-L2 Agreement",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL, str.tostring(math.round(waveAgreement_l0l2)) + "%",
-                 text_color=f_sc(waveAgreement_l0l2), text_size=_szA)
-            _rpL := _rpL + 1
-            table.cell(dashP3, 0, _rpL, "Overall Agreement",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 1, _rpL,
-                 str.tostring(math.round(waveAgreement)) + "%  " + waveAgreementLabel,
-                 text_color=f_sc(waveAgreement), text_size=_szA)
-            _rpL := _rpL + 1
+        if dashAdvancedMode
+            _rpL := f_sep(dashP3, _rpL, "WAVE AGREEMENT", _ts)
+            _rpL := f_r(dashP3, _rpL, "L0-L1 Agreement", str.tostring(math.round(waveAgreement_l0l1)) + "%", f_sc(waveAgreement_l0l1))
+            _rpL := f_r(dashP3, _rpL, "L1-L2 Agreement", str.tostring(math.round(waveAgreement_l1l2)) + "%", f_sc(waveAgreement_l1l2))
+            _rpL := f_r(dashP3, _rpL, "L0-L2 Agreement", str.tostring(math.round(waveAgreement_l0l2)) + "%", f_sc(waveAgreement_l0l2))
+            _rpL := f_r(dashP3, _rpL, "Overall Agreement", str.tostring(math.round(waveAgreement)) + "% " + waveAgreementLabel, f_sc(waveAgreement))
 
         // ═══════════════ RIGHT COLUMN GROUP (columns 2-3) ═══════════════
 
-        if showDP3_FractalConf and dashAdvancedMode
-            f_sep2(dashP3, _rpR, "FRACTAL CONFIDENCE", _ts)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L2 HTF Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(l2_confidence)) + "%",
-                 text_color=f_sc(l2_confidence), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L1 ITF Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(l1_confidence)) + "%",
-                 text_color=f_sc(l1_confidence), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L0 Primary Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(nz(l0_confidence, 0.0))) + "%",
-                 text_color=f_sc(nz(l0_confidence, 0.0)), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L3 Micro Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(l3_confidence)) + "%",
-                 text_color=f_sc(l3_confidence), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Fractal Conf",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR,
-                 str.tostring(math.round(fractalConfidence)) + "%  " + fractalConfLabel,
-                 text_color=f_sc(fractalConfidence), text_size=_szA)
-            _rpR := _rpR + 1
+        if dashAdvancedMode
+            _rpR := f_sep2(dashP3, _rpR, "FRACTAL CONFIDENCE", _ts)
+            _rpR := f_r2(dashP3, _rpR, "L2 HTF Conf", str.tostring(math.round(l2_confidence)) + "%", f_sc(l2_confidence))
+            _rpR := f_r2(dashP3, _rpR, "L1 ITF Conf", str.tostring(math.round(l1_confidence)) + "%", f_sc(l1_confidence))
+            _rpR := f_r2(dashP3, _rpR, "L0 Primary Conf", str.tostring(math.round(nz(l0_confidence, 0.0))) + "%", f_sc(nz(l0_confidence, 0.0)))
+            _rpR := f_r2(dashP3, _rpR, "L3 Micro Conf", str.tostring(math.round(l3_confidence)) + "%", f_sc(l3_confidence))
+            _rpR := f_r2(dashP3, _rpR, "Fractal Conf", str.tostring(math.round(fractalConfidence)) + "% " + fractalConfLabel, f_sc(fractalConfidence))
 
-        if showDP3_Cycles and dashAdvancedMode
-            f_sep2(dashP3, _rpR, "RECURSIVE ENTRY CYCLES", _ts)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Cycle 1",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(nz(cycle1_completion, 0.0))) + "% complete",
-                 text_color=f_sc(nz(cycle1_completion, 0.0)), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Cycle 2",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(nz(cycle2_completion, 0.0))) + "% complete",
-                 text_color=f_sc(nz(cycle2_completion, 0.0)), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Cycle 3",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(nz(cycle3_completion, 0.0))) + "% complete",
-                 text_color=f_sc(nz(cycle3_completion, 0.0)), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Cycle 4",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(nz(cycle4_completion, 0.0))) + "% complete",
-                 text_color=f_sc(nz(cycle4_completion, 0.0)), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Active Phase",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, activeCyclePhase,
-                 text_color=color.white, text_size=_szA)
-            _rpR := _rpR + 1
+        if dashAdvancedMode
+            _rpR := f_sep2(dashP3, _rpR, "RECURSIVE ENTRY CYCLES", _ts)
+            _rpR := f_r2(dashP3, _rpR, "Cycle 1", str.tostring(math.round(nz(cycle1_completion, 0.0))) + "% complete", f_sc(nz(cycle1_completion, 0.0)))
+            _rpR := f_r2(dashP3, _rpR, "Cycle 2", str.tostring(math.round(nz(cycle2_completion, 0.0))) + "% complete", f_sc(nz(cycle2_completion, 0.0)))
+            _rpR := f_r2(dashP3, _rpR, "Cycle 3", str.tostring(math.round(nz(cycle3_completion, 0.0))) + "% complete", f_sc(nz(cycle3_completion, 0.0)))
+            _rpR := f_r2(dashP3, _rpR, "Cycle 4", str.tostring(math.round(nz(cycle4_completion, 0.0))) + "% complete", f_sc(nz(cycle4_completion, 0.0)))
+            _rpR := f_r2(dashP3, _rpR, "Active Phase", activeCyclePhase, color.white)
 
-        if showDP3_GeoCap and dashAdvancedMode
-            f_sep2(dashP3, _rpR, "GEOMETRIC CAPACITY", _ts)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Capacity",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, geoCapacityNarrative,
-                 text_color=geoFullConvexityPossible ? color.lime : geoPartialConvexityPossible ? color.yellow : color.orange,
-                 text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Capacity Score",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(geoCapacityScore)) + "%",
-                 text_color=f_sc(geoCapacityScore), text_size=_szA)
-            _rpR := _rpR + 1
+        if dashAdvancedMode
+            _rpR := f_sep2(dashP3, _rpR, "GEOMETRIC CAPACITY", _ts)
+            _rpR := f_r2(dashP3, _rpR, "Capacity", geoCapacityNarrative, geoFullConvexityPossible ? color.lime : geoPartialConvexityPossible ? color.yellow : color.orange)
+            _rpR := f_r2(dashP3, _rpR, "Capacity Score", str.tostring(math.round(geoCapacityScore)) + "%", f_sc(geoCapacityScore))
 
-        if showDP3_ExecProb and dashAdvancedMode
-            f_sep2(dashP3, _rpR, "EXECUTION PROBABILITY V2", _ts)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Exec Directive",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, execDirective,
-                 text_color=execProb_StandDown >= 60 ? color.red : color.white,
-                 text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Continuation",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(execProb_Continuation)) + "%",
-                 text_color=f_sc(execProb_Continuation), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Reversal",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(execProb_Reversal)) + "%",
-                 text_color=f_sc(execProb_Reversal), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Expansion",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(execProb_Expansion)) + "%",
-                 text_color=f_sc(execProb_Expansion), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "New High / New Low",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(execProb_Creation)) + "%",
-                 text_color=f_sc(execProb_Creation), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Absorption",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(execProb_Absorption)) + "%",
-                 text_color=f_sc(execProb_Absorption), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "Stand Down",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR, str.tostring(math.round(execProb_StandDown)) + "%",
-                 text_color=execProb_StandDown >= 60 ? color.red : f_sc(100 - execProb_StandDown),
-                 text_size=_szA)
-            _rpR := _rpR + 1
+        if dashAdvancedMode
+            _rpR := f_sep2(dashP3, _rpR, "EXECUTION PROBABILITY V2", _ts)
+            _rpR := f_r2(dashP3, _rpR, "Exec Directive", execDirective, execProb_StandDown >= 60 ? color.red : color.white)
+            _rpR := f_r2(dashP3, _rpR, "Continuation", str.tostring(math.round(execProb_Continuation)) + "%", f_sc(execProb_Continuation))
+            _rpR := f_r2(dashP3, _rpR, "Reversal", str.tostring(math.round(execProb_Reversal)) + "%", f_sc(execProb_Reversal))
+            _rpR := f_r2(dashP3, _rpR, "Expansion", str.tostring(math.round(execProb_Expansion)) + "%", f_sc(execProb_Expansion))
+            _rpR := f_r2(dashP3, _rpR, "New High / New Low", str.tostring(math.round(execProb_Creation)) + "%", f_sc(execProb_Creation))
+            _rpR := f_r2(dashP3, _rpR, "Absorption", str.tostring(math.round(execProb_Absorption)) + "%", f_sc(execProb_Absorption))
+            _rpR := f_r2(dashP3, _rpR, "Stand Down", str.tostring(math.round(execProb_StandDown)) + "%", execProb_StandDown >= 60 ? color.red : f_sc(100 - execProb_StandDown))
 
-        if showDP3_WaveProgress and dashAdvancedMode
-            f_sep2(dashP3, _rpR, "MULTI-LEVEL WAVE PROGRESS", _ts)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L2 (HTF) Progress",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR,
-                 l2_targetWave + "\n" + l2_currentPhase,
-                 text_color=color.yellow, text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L1 (ITF) Progress",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR,
-                 l1_targetWave + "\n" + l1_currentPhase,
-                 text_color=color.aqua, text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L3 (Micro) Progress",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR,
-                 l3_targetWave + "\n" + l3_currentPhase,
-                 text_color=color.new(#c084fc, 0), text_size=_szA)
-            _rpR := _rpR + 1
-            table.cell(dashP3, 2, _rpR, "L0 (Primary) Progress",
-                 text_color=color.silver, text_size=_szA)
-            table.cell(dashP3, 3, _rpR,
-                 l0_targetWave + "\n" + l0_currentPhase,
-                 text_color=color.lime, text_size=_szA)
-            _rpR := _rpR + 1
+        if dashAdvancedMode
+            _rpR := f_sep2(dashP3, _rpR, "MULTI-LEVEL WAVE PROGRESS", _ts)
+            _rpR := f_r2(dashP3, _rpR, "L2 (HTF) Progress", l2_targetWave + "\n" + l2_currentPhase, color.yellow)
+            _rpR := f_r2(dashP3, _rpR, "L1 (ITF) Progress", l1_targetWave + "\n" + l1_currentPhase, color.aqua)
+            _rpR := f_r2(dashP3, _rpR, "L3 (Micro) Progress", l3_targetWave + "\n" + l3_currentPhase, color.new(#c084fc, 0))
+            _rpR := f_r2(dashP3, _rpR, "L0 (Primary) Progress", l0_targetWave + "\n" + l0_currentPhase, color.lime)
 
 
 
@@ -5944,58 +5254,24 @@ f_v72CmdDash(string _a, string _b, string _n, bool _nc, float _c, string _tt,
     table.cell(cd, 0, _r, "V72 CMD", text_color=#00ccff, bgcolor=color.new(#0a0a40, 0), text_size=_z)
     table.cell(cd, 1, _r, _a, text_color=_a == "Long" ? #00ff88 : _a == "Short" ? #ff1744 : color.gray, bgcolor=color.new(#0a0a40, 0), text_size=_z)
     _r += 1
-    table.cell(cd, 0, _r, "Bias", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _b, text_color=_b == "Strong Bullish" or _b == "Bullish" ? color.lime : _b == "Strong Bearish" or _b == "Bearish" ? color.red : color.gray, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Narr", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _n, text_color=_nc ? color.yellow : color.white, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Conf", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, str.tostring(math.round(_c)) + "%", text_color=_c >= 70 ? color.lime : _c >= 50 ? color.yellow : color.red, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Type", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _tt, text_color=color.white, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Entry", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, str.tostring(math.round(_el, 2)) + "-" + str.tostring(math.round(_eh, 2)), text_color=color.aqua, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Grade", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _g, text_color=_g == "A+" ? #00ff88 : _g == "A" ? color.lime : _g == "B" ? color.yellow : color.orange, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Risk", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _rl, text_color=_rl == "HIGH" ? color.red : _rl == "MEDIUM" ? color.yellow : color.lime, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "TP1", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, not na(_t1) ? str.tostring(math.round(_t1, 2)) : "—", text_color=color.lime, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "TP2", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, not na(_t2) ? str.tostring(math.round(_t2, 2)) : "—", text_color=color.lime, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Stop", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, not na(_st) ? str.tostring(math.round(_st, 2)) : "—", text_color=color.red, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "R:R", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, not na(_rr) ? str.tostring(math.round(_rr, 1)) + ":1" : "—", text_color=_rr >= 2 ? color.lime : _rr >= 1.5 ? color.yellow : color.red, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Phase", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _ph + " " + str.tostring(math.round(_pc)) + "%", text_color=color.white, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "ERF", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, str.tostring(math.round(_er)) + "%", text_color=_er >= 60 ? color.lime : _er >= 45 ? color.yellow : color.red, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "FRZ", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, not na(_fd) ? str.tostring(math.round(_fd, 1)) + "ATR" : "—", text_color=not na(_fd) and _fd < 1 ? color.lime : color.gray, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "Rot", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _rs + " " + str.tostring(math.round(_rp)) + "%", text_color=_rp >= 75 ? color.red : _rp >= 50 ? color.orange : color.lime, text_size=_z)
-    _r += 1
-    table.cell(cd, 0, _r, "HTF", text_color=color.gray, text_size=_z)
-    table.cell(cd, 1, _r, _hs, text_color=_mh >= 70 ? color.lime : _mh >= 50 ? color.yellow : color.red, text_size=_z)
-    _r += 1
+    _r := f_cd(cd, _r, "Bias", _b, _b == "Strong Bullish" or _b == "Bullish" ? color.lime : _b == "Strong Bearish" or _b == "Bearish" ? color.red : color.gray)
+    _r := f_cd(cd, _r, "Narr", _n, _nc ? color.yellow : color.white)
+    _r := f_cd(cd, _r, "Conf", str.tostring(math.round(_c)) + "%", _c >= 70 ? color.lime : _c >= 50 ? color.yellow : color.red)
+    _r := f_cd(cd, _r, "Type", _tt, color.white)
+    _r := f_cd(cd, _r, "Entry", str.tostring(math.round(_el, 2)) + "-" + str.tostring(math.round(_eh, 2)), color.aqua)
+    _r := f_cd(cd, _r, "Grade", _g, _g == "A+" ? #00ff88 : _g == "A" ? color.lime : _g == "B" ? color.yellow : color.orange)
+    _r := f_cd(cd, _r, "Risk", _rl, _rl == "HIGH" ? color.red : _rl == "MEDIUM" ? color.yellow : color.lime)
+    _r := f_cd(cd, _r, "TP1", not na(_t1) ? str.tostring(math.round(_t1, 2)) : "—", color.lime)
+    _r := f_cd(cd, _r, "TP2", not na(_t2) ? str.tostring(math.round(_t2, 2)) : "—", color.lime)
+    _r := f_cd(cd, _r, "Stop", not na(_st) ? str.tostring(math.round(_st, 2)) : "—", color.red)
+    _r := f_cd(cd, _r, "R:R", not na(_rr) ? str.tostring(math.round(_rr, 1)) + ":1" : "—", _rr >= 2 ? color.lime : _rr >= 1.5 ? color.yellow : color.red)
+    _r := f_cd(cd, _r, "Phase", _ph + " " + str.tostring(math.round(_pc)) + "%", color.white)
+    _r := f_cd(cd, _r, "ERF", str.tostring(math.round(_er)) + "%", _er >= 60 ? color.lime : _er >= 45 ? color.yellow : color.red)
+    _r := f_cd(cd, _r, "FRZ", not na(_fd) ? str.tostring(math.round(_fd, 1)) + "ATR" : "—", not na(_fd) and _fd < 1 ? color.lime : color.gray)
+    _r := f_cd(cd, _r, "Rot", _rs + " " + str.tostring(math.round(_rp)) + "%", _rp >= 75 ? color.red : _rp >= 50 ? color.orange : color.lime)
+    _r := f_cd(cd, _r, "HTF", _hs, _mh >= 70 ? color.lime : _mh >= 50 ? color.yellow : color.red)
     if _adv
-        table.cell(cd, 0, _r, "Src", text_color=color.gray, text_size=_z)
-        table.cell(cd, 1, _r, _ts, text_color=color.white, text_size=_z)
-        _r += 1
+        _r := f_cd(cd, _r, "Src", _ts, color.white)
         table.cell(cd, 0, _r, "Scr", text_color=color.gray, text_size=_z)
         table.cell(cd, 1, _r, _tc, text_color=color.white, text_size=_z)
 
