@@ -3506,41 +3506,65 @@ f_frzRemove(int idx) =>
 
 // Helper: Dominant narrative (compressed ternary chain)
 f_getNarrative(int dir, float htfAl, string phase, float rotProb, string rotSt, string resSt) =>
-    dir == 1 and htfAl >= 70 and (phase == "Expansion" or phase == "New High") and rotProb < 40 ? "Bullish Continuation" :
-    dir == -1 and htfAl >= 70 and (phase == "Expansion" or phase == "New Low") and rotProb < 40 ? "Bearish Continuation" :
-    dir == 1 and htfAl >= 55 and (phase == "Retracement" or phase == "Demand Return") ? "Bullish Pullback" :
-    dir == -1 and htfAl >= 55 and (phase == "Retracement" or phase == "Supply Return") ? "Bearish Pullback" :
-    rotProb >= 65 and dir == -1 ? "Bullish Rotation" :
-    rotProb >= 65 and dir == 1 and htfAl < 50 ? "Bearish Rotation" :
-    rotSt == "CONTESTED" and resSt == "UNRESOLVED" ? "Range Development" : "No Clear Narrative"
+    string result = "No Clear Narrative"
+    if dir == 1 and htfAl >= 70 and (phase == "Expansion" or phase == "New High") and rotProb < 40
+        result := "Bullish Continuation"
+    else if dir == -1 and htfAl >= 70 and (phase == "Expansion" or phase == "New Low") and rotProb < 40
+        result := "Bearish Continuation"
+    else if dir == 1 and htfAl >= 55 and (phase == "Retracement" or phase == "Demand Return")
+        result := "Bullish Pullback"
+    else if dir == -1 and htfAl >= 55 and (phase == "Retracement" or phase == "Supply Return")
+        result := "Bearish Pullback"
+    else if rotProb >= 65 and dir == -1
+        result := "Bullish Rotation"
+    else if rotProb >= 65 and dir == 1 and htfAl < 50
+        result := "Bearish Rotation"
+    else if rotSt == "CONTESTED" and resSt == "UNRESOLVED"
+        result := "Range Development"
+    result
 
 // Helper: DOE bias (compressed ternary chain)
 f_getBias(int dir, float htfAl, float rotStab) =>
-    dir == 1 and htfAl >= 75 and rotStab >= 65 ? "Strong Bullish" :
-    dir == 1 and htfAl >= 50 ? "Bullish" :
-    dir == -1 and htfAl >= 75 and rotStab >= 65 ? "Strong Bearish" :
-    dir == -1 and htfAl >= 50 ? "Bearish" : "Neutral"
+    string result = "Neutral"
+    if dir == 1 and htfAl >= 75 and rotStab >= 65
+        result := "Strong Bullish"
+    else if dir == 1 and htfAl >= 50
+        result := "Bullish"
+    else if dir == -1 and htfAl >= 75 and rotStab >= 65
+        result := "Strong Bearish"
+    else if dir == -1 and htfAl >= 50
+        result := "Bearish"
+    result
 
 // Helper: DOE action (compressed ternary chain)
 f_getAction(bool inv, bool erfGate, bool rrGate, string phase, int dir, float rotProb, string narr) =>
-    inv ? "No Trade" :
-    not erfGate ? "Wait" :
-    not rrGate ? "Wait" :
-    phase == "Demand Return" and dir == 1 ? "Long" :
-    phase == "Supply Return" and dir == -1 ? "Short" :
-    rotProb >= 75 and narr == "Bullish Rotation" ? "Long" :
-    rotProb >= 75 and narr == "Bearish Rotation" ? "Short" : "Wait"
+    string result = "Wait"
+    if inv
+        result := "No Trade"
+    else if not erfGate
+        result := "Wait"
+    else if not rrGate
+        result := "Wait"
+    else if phase == "Demand Return" and dir == 1
+        result := "Long"
+    else if phase == "Supply Return" and dir == -1
+        result := "Short"
+    else if rotProb >= 75 and narr == "Bullish Rotation"
+        result := "Long"
+    else if rotProb >= 75 and narr == "Bearish Rotation"
+        result := "Short"
+    result
 
 // Text size string → Pine size constant
 string _ts = dashTextSize
 string _szA = _ts == "tiny" ? size.tiny : size.small
 
 // Common colors
-color _cW30 = _cW30
-color _cW20 = _cW20
-color _cW80 = _cW80
-color _cR92 = _cR92
-color _cT92 = _cT92
+color _cW30 = color.new(color.white, 30)
+color _cW20 = color.new(color.white, 20)
+color _cW80 = color.new(color.white, 80)
+color _cR92 = color.new(color.red, 92)
+color _cT92 = color.new(color.teal, 92)
 
 // ────────────────────
 // DASHBOARD PANELS A/B/C/FU — wrapped in function to satisfy body-length limit
