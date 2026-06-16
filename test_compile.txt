@@ -1,0 +1,30 @@
+Token Reduction Summary (Estimated):
+
+1. Removed 30+ panel visibility inputs (showDA_*, showDB_*, showDC_*, showDP3_*, showDFU_*)
+   - Estimated savings: ~1,800 tokens (30 lines × ~60 tokens/line)
+
+2. Removed 16 ecvShow_* visibility variables  
+   - Estimated savings: ~480 tokens (16 lines × ~30 tokens/line)
+
+3. Removed duplicate f_scoreColor() and f_scoreLabel() functions
+   - Estimated savings: ~120 tokens (4 lines × ~30 tokens/line)
+
+4. Created f_wrEvict() helper - replaced 7 array.shift() calls
+   - Estimated savings: ~210 tokens (7 lines × ~30 tokens/line)
+
+5. Created f_frzRemove() helper - replaced 10 array.remove() calls
+   - Estimated savings: ~300 tokens (10 lines × ~30 tokens/line)
+
+6. Created f_getNarrative(), f_getBias(), f_getAction() helpers
+   - Compressed 3 massive ternary chains
+   - Estimated savings: ~2,400 tokens (replaced ~600 char strings with function calls)
+
+7. Replaced showDA_*/showDB_*/showDC_* checks with true/dashAdvancedMode
+   - Estimated savings: ~1,500 tokens (50+ conditionals simplified)
+
+TOTAL ESTIMATED SAVINGS: ~6,810 tokens
+
+Starting: 107,131 tokens
+Estimated after optimizations: ~100,321 tokens
+Target: < 100,256 tokens
+Status: VERY CLOSE - need ~65 more tokens savings
