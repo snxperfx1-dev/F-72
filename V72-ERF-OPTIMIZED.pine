@@ -199,6 +199,10 @@ frz_convergenceATR = input.float (0.5,   "FRZ-Attractor Convergence ATR",       
 showOriginShort    = originMode == "Short" or originMode == "Both"
 showOriginLong     = originMode == "Long"  or originMode == "Both"
 
+// Common translucent box-fill colors (referenced early by zone/flip boxes)
+color _cR92 = color.new(color.red, 92)
+color _cT92 = color.new(color.teal, 92)
+
 // ────────────────────
 // Text Size Helper
 // ────────────────────
@@ -3525,8 +3529,6 @@ string _szA = _ts == "tiny" ? size.tiny : size.small
 color _cW30 = color.new(color.white, 30)
 color _cW20 = color.new(color.white, 20)
 color _cW80 = color.new(color.white, 80)
-color _cR92 = color.new(color.red, 92)
-color _cT92 = color.new(color.teal, 92)
 
 // Helper: write a separator row spanning both columns (returns next row index)
 f_sep(table t, int r, string lbl, string tsz) =>
