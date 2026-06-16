@@ -205,89 +205,6 @@ showOriginLong     = originMode == "Long"  or originMode == "Both"
 f_tsize(string s) =>
     s == "tiny" ? size.tiny : s == "normal" ? size.normal : size.small
 
-// ────────────────────
-// Helper Functions (must be defined before use)
-// ────────────────────
-
-// Helper: WR eviction (removes oldest entry from all WR arrays)
-f_wrEvict() =>
-    array.shift(wr_waveId)
-    array.shift(wr_parentWaveId)
-    array.shift(wr_rootWaveId)
-    array.shift(wr_birthBar)
-    array.shift(wr_deathBar)
-    array.shift(wr_spawnPhase)
-    array.shift(wr_deathPhase)
-    array.shift(wr_depth)
-
-// Helper: FRZ removal (removes entry at index from all FRZ arrays)
-f_frzRemove(int idx) =>
-    array.remove(frz_topArr, idx)
-    array.remove(frz_botArr, idx)
-    array.remove(frz_barArr, idx)
-    array.remove(frz_dirArr, idx)
-    array.remove(frz_scoreArr, idx)
-    array.remove(frz_classArr, idx)
-    array.remove(frz_tierArr, idx)
-    array.remove(frz_tierFArr, idx)
-    array.remove(frz_compArr, idx)
-    array.remove(frz_ownerArr, idx)
-    array.remove(frz_statusArr, idx)
-    array.remove(frz_idxArr, idx)
-    array.remove(frz_boxArr, idx)
-    array.remove(frz_lblArr, idx)
-
-// Helper: Dominant narrative (compressed ternary chain)
-f_getNarrative(int dir, float htfAl, string phase, float rotProb, string rotSt, string resSt) =>
-    string result = "No Clear Narrative"
-    if dir == 1 and htfAl >= 70 and (phase == "Expansion" or phase == "New High") and rotProb < 40
-        result := "Bullish Continuation"
-    else if dir == -1 and htfAl >= 70 and (phase == "Expansion" or phase == "New Low") and rotProb < 40
-        result := "Bearish Continuation"
-    else if dir == 1 and htfAl >= 55 and (phase == "Retracement" or phase == "Demand Return")
-        result := "Bullish Pullback"
-    else if dir == -1 and htfAl >= 55 and (phase == "Retracement" or phase == "Supply Return")
-        result := "Bearish Pullback"
-    else if rotProb >= 65 and dir == -1
-        result := "Bullish Rotation"
-    else if rotProb >= 65 and dir == 1 and htfAl < 50
-        result := "Bearish Rotation"
-    else if rotSt == "CONTESTED" and resSt == "UNRESOLVED"
-        result := "Range Development"
-    result
-
-// Helper: DOE bias (compressed ternary chain)
-f_getBias(int dir, float htfAl, float rotStab) =>
-    string result = "Neutral"
-    if dir == 1 and htfAl >= 75 and rotStab >= 65
-        result := "Strong Bullish"
-    else if dir == 1 and htfAl >= 50
-        result := "Bullish"
-    else if dir == -1 and htfAl >= 75 and rotStab >= 65
-        result := "Strong Bearish"
-    else if dir == -1 and htfAl >= 50
-        result := "Bearish"
-    result
-
-// Helper: DOE action (compressed ternary chain)
-f_getAction(bool inv, bool erfGate, bool rrGate, string phase, int dir, float rotProb, string narr) =>
-    string result = "Wait"
-    if inv
-        result := "No Trade"
-    else if not erfGate
-        result := "Wait"
-    else if not rrGate
-        result := "Wait"
-    else if phase == "Demand Return" and dir == 1
-        result := "Long"
-    else if phase == "Supply Return" and dir == -1
-        result := "Short"
-    else if rotProb >= 75 and narr == "Bullish Rotation"
-        result := "Long"
-    else if rotProb >= 75 and narr == "Bearish Rotation"
-        result := "Short"
-    result
-
 // ═══════════════
 // SECTION 2 — CORE PHYSICS ENGINE
 // ═══════════════
@@ -688,6 +605,89 @@ f_storeCycleState(int _cycle, float _obT, float _obB, float _fT, float _fB,
              bottom=_p4L, bgcolor=_histCol, border_color=_histBorder,
              border_style=line.style_dashed, border_width=1)
         array.set(cycleHistoryBoxes, _idx, _hb)
+
+// ─────────────────
+// HELPER FUNCTIONS (defined after arrays are declared, before first use)
+// ─────────────────
+
+// Helper: WR eviction (removes oldest entry from all WR arrays)
+f_wrEvict() =>
+    array.shift(wr_waveId)
+    array.shift(wr_parentWaveId)
+    array.shift(wr_rootWaveId)
+    array.shift(wr_birthBar)
+    array.shift(wr_deathBar)
+    array.shift(wr_spawnPhase)
+    array.shift(wr_deathPhase)
+    array.shift(wr_depth)
+
+// Helper: FRZ removal (removes entry at index from all FRZ arrays)
+f_frzRemove(int idx) =>
+    array.remove(frz_topArr, idx)
+    array.remove(frz_botArr, idx)
+    array.remove(frz_barArr, idx)
+    array.remove(frz_dirArr, idx)
+    array.remove(frz_scoreArr, idx)
+    array.remove(frz_classArr, idx)
+    array.remove(frz_tierArr, idx)
+    array.remove(frz_tierFArr, idx)
+    array.remove(frz_compArr, idx)
+    array.remove(frz_ownerArr, idx)
+    array.remove(frz_statusArr, idx)
+    array.remove(frz_idxArr, idx)
+    array.remove(frz_boxArr, idx)
+    array.remove(frz_lblArr, idx)
+
+// Helper: Dominant narrative (compressed ternary chain)
+f_getNarrative(int dir, float htfAl, string phase, float rotProb, string rotSt, string resSt) =>
+    string result = "No Clear Narrative"
+    if dir == 1 and htfAl >= 70 and (phase == "Expansion" or phase == "New High") and rotProb < 40
+        result := "Bullish Continuation"
+    else if dir == -1 and htfAl >= 70 and (phase == "Expansion" or phase == "New Low") and rotProb < 40
+        result := "Bearish Continuation"
+    else if dir == 1 and htfAl >= 55 and (phase == "Retracement" or phase == "Demand Return")
+        result := "Bullish Pullback"
+    else if dir == -1 and htfAl >= 55 and (phase == "Retracement" or phase == "Supply Return")
+        result := "Bearish Pullback"
+    else if rotProb >= 65 and dir == -1
+        result := "Bullish Rotation"
+    else if rotProb >= 65 and dir == 1 and htfAl < 50
+        result := "Bearish Rotation"
+    else if rotSt == "CONTESTED" and resSt == "UNRESOLVED"
+        result := "Range Development"
+    result
+
+// Helper: DOE bias (compressed ternary chain)
+f_getBias(int dir, float htfAl, float rotStab) =>
+    string result = "Neutral"
+    if dir == 1 and htfAl >= 75 and rotStab >= 65
+        result := "Strong Bullish"
+    else if dir == 1 and htfAl >= 50
+        result := "Bullish"
+    else if dir == -1 and htfAl >= 75 and rotStab >= 65
+        result := "Strong Bearish"
+    else if dir == -1 and htfAl >= 50
+        result := "Bearish"
+    result
+
+// Helper: DOE action (compressed ternary chain)
+f_getAction(bool inv, bool erfGate, bool rrGate, string phase, int dir, float rotProb, string narr) =>
+    string result = "Wait"
+    if inv
+        result := "No Trade"
+    else if not erfGate
+        result := "Wait"
+    else if not rrGate
+        result := "Wait"
+    else if phase == "Demand Return" and dir == 1
+        result := "Long"
+    else if phase == "Supply Return" and dir == -1
+        result := "Short"
+    else if rotProb >= 75 and narr == "Bullish Rotation"
+        result := "Long"
+    else if rotProb >= 75 and narr == "Bearish Rotation"
+        result := "Short"
+    result
 
 // ═══════════════
 // FORWARD DECLARATIONS
